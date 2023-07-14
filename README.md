@@ -8,7 +8,7 @@ The objective of this project is to serve as a software development challenge fo
 ------------------------
 ## Function:
 
-This project is a web application for customer management, developed using ASP.NET Core with a MySQL database. The development time for this project is one week.
+This project is a web application for customer management, developed using ASP.NET Core with a MySQL database in VisualStudio. The development time for this project is one week.
 
 The project includes the following functionalities:
 

@@ -1,0 +1,291 @@
+﻿@model List<ClientsModel>
+
+@{
+    ViewData["Title"] = "Lista de Clientes";
+}
+
+<body>
+    <div style="display:flex; justify-content: space-between; align-items: center">
+        <h1>Clientes</h1>
+        <div style="display:flex; gap: 10px">
+            <button type="button" class="btn btn-primary" onclick="toggleFilterArea(true)">Filtrar</button>
+            <a 
+               role="button"
+               asp-controller="Clients"
+               asp-action="Create"
+               class="btn btn-success"
+              
+            >
+                Adicionar Clientes
+            </a>
+        </div>
+    </div>
+
+    <div id="filterArea" style="display: none;" >
+        <div class="mb-1">
+            <label for="filterName" class="form-label">Nome/Razão Social</label>
+            <input type="text" class="form-control" id="filterName" placeholder="Nome ou Razão Social do Cliente">
+        </div>
+        <div class="mb-1">
+            <label for="filterEmail" class="form-label">E-mail</label>
+            <input type="email" class="form-control" id="filterEmail" placeholder="E-mail do Cliente">
+        </div>
+        <div class="mb-1">
+            <label for="filterPhone" class="form-label">Telefone</label>
+            <input type="tel" class="form-control" id="filterPhone" placeholder="Telefone do Cliente">
+        </div>
+        <div class="mb-1">
+            <label for="filterCadDate" class="form-label">Data de Cadastro</label>
+            <input type="date" class="form-control" id="filterCadDate" placeholder="Selecione uma data ou período">
+        </div>
+        <div class="mb-1">
+            <label for="filterBlocked" class="form-label">Cliente bloqueado</label>
+            <select class="form-select" id="filterBlocked">
+                <option value="">Todos</option>
+                <option value="true">SIM</option>
+                <option value="false">NÃO</option>
+            </select>
+        </div>
+        <div class="filterButtons">
+            <button type="button" class="btn btn-secondary" onclick="clearFilters()">Limpar filtros</button>
+            <button type="button" class="btn btn-primary" onclick="applyFilters(true)">Aplicar filtros</button>
+        </div>
+    </div>
+
+    <table class="table" id="table-clients">
+        <thead>
+            <tr>
+                <th scope="col"><input type="checkbox" id="checkboxMaster" onclick="checkAll()"/></th>
+                <th scope="col">Nome/Razão Social</th>
+                <th scope="col">E-mail</th>
+                <th scope="col">Telefone</th>
+                <th scope="col">CAD. data</th>
+                <th scope="col">Bloqueado</th>
+                <th scope="col">Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+
+        </tbody>
+    </table>
+        <div id="pagDiv" style="display:flex; width:100%; justify-content: center; align-items:center; gap:15px">
+            <button onclick="previousPage()" style="padding:0; height:23px; width:23px;" class="btn btn-outline-primary btn-sm"><</button>
+                <p id="pagNumber" style="margin:0" ></p>
+            <button onclick="nextPage()" style="padding:0; height:23px; width:23px;" class="btn btn-outline-primary btn-sm">></button>
+        </div>
+    <script>
+        let pageSize = 10
+        let currentPage = 1
+        let totalPageCount = 0
+        let filterIsOpen = false
+        let clientsList = []
+
+        async function renderTable(clients) {
+            if(clients === null || clients === undefined || clients.length < 1) {
+                let clientsRes = await fetch("/Clients/ListClients")
+                clients = await clientsRes.json()
+            }
+            let checkMaster = document.getElementById("checkboxMaster")
+
+            let pagination = document.getElementById("pagNumber")
+            let tableBody = document.getElementById("tableBody")
+            let pageStart = (currentPage - 1) * pageSize
+            let pageEnd = Math.min(pageStart + pageSize, clients.length)
+
+            totalPageCount = Math.ceil(clients.length / pageSize)
+
+            pagination.innerText = currentPage + "/" + totalPageCount
+
+            tableBody.innerHTML = ""
+
+            for(let i = pageStart; i < pageEnd; i++) {
+                let row = document.createElement("tr")
+                let select = document.createElement("select")
+                let tdButtons = document.createElement("td")
+                let tdSelect = document.createElement("td")
+                let editUrl = "/Clients/Edit/" + clients[i].id
+                let deleteUrl = "/Clients/DeleteConfirmation/" + clients[i].id
+
+                let arrayCadDateFormated = ((clients[i].cad_date).split('T')[0]).split('-')
+
+                let cadDateFormated = arrayCadDateFormated[2] + "/" + arrayCadDateFormated[1] + "/" + arrayCadDateFormated[0]
+                
+                select.classList.add("form-control-sm")
+
+                select.addEventListener('change', function () {
+                    editType(this, clients[i].id)
+                })
+
+                if(clients[i].is_blocked){
+                    select.innerHTML = `
+                        <option value="true" selected>SIM</option>
+                        <option value="false">NÃO</option>
+                    `
+                }else {
+                    select.innerHTML = `
+                        <option value="true">SIM</option>
+                        <option value="false" selected>NÃO</option>
+                    `
+                }
+
+                tdButtons.innerHTML = `
+                    <a role="button" class="btn btn-primary" href="${editUrl} ">Editar</a>
+                    <a role="button" class="btn btn-danger" href="${deleteUrl}">Apagar</a>
+                `
+                if (checkMaster.checked) {
+                    row.innerHTML = `
+                            <th scope="row"><input type="checkbox" class="checkbox" checked/></th>
+                            <td>${clients[i].name}</td>
+                            <td>${clients[i].email}</td>
+                            <td>${clients[i].phone}</td>
+                            <td>${cadDateFormated}</td>
+                        `
+                } else {
+                    row.innerHTML = `
+                            <th scope="row"><input type="checkbox" class="checkbox"/></th>
+                            <td>${clients[i].name}</td>
+                            <td>${clients[i].email}</td>
+                            <td>${clients[i].phone}</td>
+                            <td>${cadDateFormated}</td>
+                        `
+                }
+                
+
+                tdSelect.appendChild(select)
+                row.appendChild(tdSelect)
+                row.appendChild(tdButtons)
+
+                tableBody.appendChild(row)
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                applyFilters(false)
+            }
+        }
+
+        function nextPage() { 
+            if (currentPage < totalPageCount) {
+                currentPage++;
+                applyFilters(false)
+            }
+        }
+
+        renderTable(null)
+
+
+        function editType(selectElement, clientId) {
+            var is_blocked = selectElement.value;
+
+            $.ajax({
+                type: "PATCH",
+                url: "/Clients/EditType",
+                data: { is_blocked: is_blocked, id: clientId },
+                success: function (response) {
+                },
+                error: function (error) {
+                }
+            });
+        }
+
+        function toggleFilterArea(toggle) {
+            if (toggle) {
+                filterIsOpen = !filterIsOpen
+            }
+            var filterArea = document.getElementById("filterArea");
+            filterArea.style.display = filterArea.style.display === "none" ? "block" : "none";
+        }
+
+        function clearFilters() {
+            document.getElementById("filterName").value = "";
+            document.getElementById("filterEmail").value = "";
+            document.getElementById("filterPhone").value = "";
+            document.getElementById("filterCadDate").value = "";
+            document.getElementById("filterBlocked").value = "";
+        }
+
+        
+
+        async function applyFilters(toggle) {
+            let clientsRes = await fetch("/Clients/ListClients")
+            let clients = await clientsRes.json()
+
+            let filterName = document.getElementById("filterName").value
+            let filterEmail = document.getElementById("filterEmail").value
+            let filterPhone = document.getElementById("filterPhone").value
+            let filterCadDate = document.getElementById("filterCadDate").value
+            let filterBlocked = document.getElementById("filterBlocked").value
+
+            if(filterBlocked !== null && filterBlocked !== undefined && filterBlocked.length > 1) {
+                filterBlocked = filterBlocked === 'true'
+            }
+
+            let clientsList = []
+
+            for (let i = 0; i < clients.length; i++) {
+                let name = clients[i].name
+                let email = clients[i].email
+                let phone = clients[i].phone
+                let cadDate = clients[i].cadDate
+                let blocked = clients[i].is_blocked
+                let arrayCadDateFormated = ((clients[i].cad_date).split('T')[0]).split('-')
+                let cadDateFormatted = arrayCadDateFormated[2] + "/" + arrayCadDateFormated[1] + "/" + arrayCadDateFormated[0]
+
+                let isMatch = true;
+
+                if (filterName && !name.includes(filterName)) {
+                    isMatch = false;
+                }
+
+                if (filterEmail && !email.includes(filterEmail)) {
+                    isMatch = false;
+                }
+
+                if (filterPhone && !phone.includes(filterPhone)) {
+                    isMatch = false;
+                }
+
+                if (filterCadDate && cadDateFormatted !== filterCadDate) {
+                    isMatch = false;
+                }
+
+                if (filterBlocked !== null && blocked !== filterBlocked) {
+                    isMatch = false;
+                }
+
+                if(isMatch){
+                    clientsList.push(clients[i])
+                }
+            }
+
+            if (toggle) {
+                filterIsOpen = !filterIsOpen
+                toggleFilterArea()
+            }
+
+            if(!filterIsOpen && toggle) {
+                currentPage = 1
+            }
+
+            await renderTable(clientsList)
+        }
+
+        function formatDate(dateString) {
+            let parts = dateString.split("/")
+            if (parts.length === 3) {
+                return parts[2] + "-" + parts[1] + "-" + parts[0]
+            }
+            return dateString
+        }
+
+        function checkAll() {
+            let checkboxes = document.querySelectorAll(".checkbox")
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !checkbox.checked;
+            });
+        }
+    </script>
+</body>

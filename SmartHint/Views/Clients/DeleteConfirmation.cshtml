@@ -1,0 +1,16 @@
+﻿@model ClientsModel
+<body>
+    <div class="text-center">
+        <div>
+            <h3>Você deseja apagar esse cliente?</h3>
+        </div>
+        <div style="margin-top:40px">
+            <h5>@Model.Name</h5>
+            <h5 style="margin-top:20px">@Model.Email</h5>
+        </div>
+    </div>
+    <div class="text-center" style="margin-top: 40px">
+        <a class="btn btn-primary btn-block" rule="button" asp-controller="Clients" asp-action="List">Cancelar</a>
+        <a class="btn btn-danger btn-block" rule="button" asp-controller="Clients" asp-action="Delete" method="delete" asp-route-id="@Model.Id">Confirmar</a>
+    </div>
+</body>

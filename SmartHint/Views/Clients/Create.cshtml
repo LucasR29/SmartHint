@@ -1,0 +1,394 @@
+﻿@model ClientsModel
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.6/jquery.inputmask.min.js"></script>
+
+
+<body>
+    <div style="display: flex; justify-content: center">
+        <h1>Adicionar Cliente</h1>
+    </div>
+
+    <div style="display: flex; justify-content: center;">
+
+        <form style="max-width: 800px; width: 90%" asp-controller="Clients" asp-action="Create" method="post" onsubmit="return validateForm(event)">
+
+            <h3>Dados Principais</h3>
+
+            <div class="mb-3">
+
+                <div class="div-65">
+                    <div class="div_info">
+                        <label for="InputName" class="form-label">Nome / Razão social </label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Nome completo ou Razão Social do Cliente"></i>
+                    </div>
+                    
+                    <input type="text" asp-for="Name"  class="form-control" id="InputName" aria-describedby="nameHelp" required>
+                </div>
+
+                <div class="div-30">
+                    <div class="div_info">
+                        <label for="InputPhone" class="form-label">Telefone </label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Telefone do cliente"></i>
+                    </div>
+                    <input type="tel" asp-for="Phone" class="form-control" id="InputPhone" aria-describedby="phoneHelp" required>
+                </div>
+
+            </div>
+
+            <div class="mb-3" style="display: flex; justify-content: space-between">
+
+                <div class="div-65">
+                    <div class="div_info">
+                        <label for="InputEmail" class="form-label">E-mail </label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="E-mail do cliente"></i>
+                    </div>
+                    <input type="text" maxlength="150" asp-for="Email" class="form-control" id="InputEmail" aria-describedby="emailHelp" required>
+                </div>
+
+                <div class="div-30">
+                    <label for="InputDate" class="form-label">Data</label>
+                    <input value="@DateTime.Now.ToShortDateString()" disabled type="text" class="form-control" id="InputDAte" aria-describedby="dateHelp">
+                    <input value="@DateTime.Now.ToShortDateString()" hidden type="text" asp-for="Cad_date" class="form-control" id="InputDate" aria-describedby="dateHelp">
+
+                </div>
+
+            </div>
+
+            <h3>Informações Pessoais</h3>
+
+            <div class="mb-3">
+
+                <div class="div-65">
+                    <div class="div_info">
+                        <label for="InputCpf" class="form-label">CPF/CNPF </label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Insira o CPF ou o CNPJ do Cliente"></i>
+                    </div>
+                    <input type="text" asp-for="Cpf" data-toggle="tooltip" data-placement="bottom" title="" class="form-control" id="InputCpf">
+                    <p style="display:none; font-size:10px; color: orangered" id="warningCpf">CPF/CNPF inválido</p>
+                </div>
+
+                <div class="div-30">
+                    <div class="div_info">
+                        <label for="SelectPfPj" class="form-label">Tipo de Pessoa</label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Selecione o tipo de Pessoa"></i>
+                    </div>
+                    <select class="form-select form-select-lb mb-0.5" onchange="togglePf(this)" asp-for="Type" aria-label=".form-select-sm" id="SelectPfPj" required>
+                        <option value="" disabled selected>Selecione</option>
+                        <option value="PF">Pessoa Física</option>
+                        <option value="PJ">Pesosa Jurídica</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="mb-3" id="pj_section">
+
+                <div class="div-65" >
+                    <div class="div_info">
+                        <label for="InputInscription" class="form-label">Inscrição Estadual</label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Inscrição Estadual do Cliente, selecionar Isento caso assim for"></i>
+                    </div>
+                    <input type="text" asp-for="State_reg" class="form-control changeReqPj" id="InputInscription" required>
+                    <p style="display:none; font-size:10px; color: orangered" id="warningState">Inscrição estadual inválida</p>
+                </div>
+
+                <div style="padding-top:10px" class="div-30 div-check">
+                    <input type="checkbox" asp-for="Exempt" onchange="toggleStateReg(this)" class="form-check-input" id="CheckIsento">
+                    <label class="form-check-label" for="CheckIsento" >Isento</label>
+                </div>
+
+            </div>
+
+            <div id="pf_section" >
+
+                <h3>Informações Pessoa Física</h3>
+
+                <div class="mb-3">
+
+                    <div class="div-65 ">
+
+                        <div>
+                            <div class="div_info">
+                                <label for="SelectGender" class="form-label">Genêro</label>
+                                <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Selecione o gênero do Cliente"></i>
+                            </div>
+                            <select id="SelectGender" class="form-select form-select-lb mb-0.5 changeReqPf" asp-for="Sex" aria-label=".form-select-sm" required>
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="feminino">Feminino</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="div-30">
+                        <div class="div_info">
+                            <label for="InputDate" class="form-label">Data de Nascimento</label>
+                            <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Data de nascimento do Cliente"></i>
+                        </div>
+                        <input id="birthDate" type="date" class="form-control changeReqPf" asp-for="Birth_Date" id="Birth_Date" aria-describedby="dateHelp" required>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3>Informações De Segurança</h3>
+
+            <div class="mb-3">
+
+                <div class="div-65">
+                    <div class="div_info">
+                        <label for="ClientPassword" class="form-label">Senha de Acesso</label>
+                        <i class="bi bi-info-circle" style="font-size:10px; padding-top:6px" data-toggle="tooltip" data-placement="bottom" title="Cadastre a senha de acesso do seu Cliente"></i>
+                    </div>
+                    <input type="password" class="form-control" asp-for="Password" id="ClientPassword" placeholder="**********" maxlength="15" minlength="8" required />
+                    <label for="PasswordConfirmation" class="form-label" style="margin-top: 10px">Confirme a senha</label>
+                    <input type="password" class="form-control" id="PasswordConfirmation" placeholder="**********" />
+                    <p style="display:none; font-size:10px; color: orangered" id="warning">As senhas não batem</p>
+                </div>
+
+                <div class="div-30">
+                    <div style="padding-top:25px" class="div-check">
+                        <div>
+                            <input type="checkbox" class="form-check-input" asp-for="Is_blocked" id="Check">
+                        </div>
+
+                        <div class="div_info">
+                            <label for="Is_blocked" class="form-label">Bloqeado</label>
+                            <i class="bi bi-info-circle" style="font-size:10px;" data-toggle="tooltip" data-placement="bottom" title="Boqueia o acesso do cliente a sua loja"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="margin-top: 30px;" class="div-buttons">
+                <button type="submit" class="btn btn-primary" id="submitForm" onclick="validatePasswords()">Adicionar</button>
+                <a class="btn btn-secondary" asp-controller="Clients" role="button"  asp-action="List">Voltar</a>
+            </div>
+
+        </form>
+
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div class="toast align-items-center border-0 text-white bg-danger" id="toastEmail" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Conflito</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Email já cadastrado
+                </div>
+            </div>
+
+            <div class="toast align-items-center border-0 text-white bg-danger" id="toastCpf" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Conflito</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    CPF/CNPF já cadastrado
+                </div>
+            </div>
+
+            <div class="toast align-items-center border-0 text-white bg-danger" id="toastState" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Conflito</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Inscrição estadual já cadastrada para outro cliente
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        async function validateForm(event) {
+            event.preventDefault();
+
+            let isValid = await validatePasswords();
+
+            if (isValid) {
+                event.target.submit();
+            }
+        }
+
+        async function validatePasswords() {
+            let password = document.getElementById("ClientPassword").value
+            let passwordConfirmation = document.getElementById("PasswordConfirmation").value
+            let warning = document.getElementById("warning")
+            let email = document.getElementById("InputEmail").value
+            let cpf = document.getElementById("InputCpf").value
+            let toastEmail = bootstrap.Toast.getOrCreateInstance(document.getElementById("toastEmail"))
+            let toastCpf = bootstrap.Toast.getOrCreateInstance(document.getElementById("toastCpf"))
+            let toastState = bootstrap.Toast.getOrCreateInstance(document.getElementById("toastState"))
+            let pj_section = document.getElementById("pj_section")
+            let checkIsento = document.getElementById("CheckIsento")
+            let emailUnique = true
+            let cpfUnique = true
+            let stateUnique = true
+            let warningState = document.getElementById("warningState")
+            let warningCpf = document.getElementById("warningCpf")
+            let stateReg = document.getElementById("InputInscription").value
+
+            let stateLength = stateReg.split("").map((c) => (c === "-" || c === "." || c === "_" || c === "/") ? "" : c).join("").length
+            let cpfLength = cpf.split("").map((c) => (c === "-" || c === "." || c === "_" || c === "/") ? "" : c).join("").length
+            
+            console.log(pj_section.style.display)
+
+            if (pj_section.style.display != "none" && !checkIsento.checked) {
+                if (stateLength != "12") {
+                    warningState.style.display = "block"
+                    return false
+                } else {
+                    warningState.style.display = "none"
+                }
+            }
+
+            console.log("1")
+
+            if(cpfLength < "11" || cpfLength > "11" && cpfLength < "14" || cpfLength > "14"){
+                console.log(cpfLength)
+                warningCpf.style.display = "block"
+                return false
+            }
+
+            try {
+                let emailResponse = await fetch("/Clients/GetUserByEmail?email=" + email);
+                let emailData = await emailResponse.json();
+                if (emailData === true) {
+                    toastEmail.show();
+                    emailUnique = false;
+                }
+
+                console.log("2")
+
+                if (pj_section.style.display != "none" && !checkIsento.checked) {
+                    let stateResponse = await fetch("/Clients/GetUserByStateReg?state_reg=" + stateReg);
+                    let stateData = await stateResponse.json();
+                    if (stateData === true) {
+                        toastState.show();
+                        stateUnique = false;
+                    }
+                }
+
+                console.log("3")
+
+                let cpfResponse = await fetch("/Clients/GetUserByCpf?cpf=" + cpf);
+                let cpfData = await cpfResponse.json();
+                if (cpfData === true) {
+                    toastCpf.show();
+                    cpfUnique = false;
+                }
+
+                console.log("4")
+
+                if (!emailUnique || !cpfUnique || !stateUnique) {
+                    return false;
+                }
+
+                if (password !== passwordConfirmation) {
+                    warning.style.display = "block";
+                    return false;
+                } else {
+                    warning.style.display = "none";
+                }
+
+                console.log("5")
+
+                return true;
+            } catch (error) {
+                console.error(error);
+                return false;
+            }
+        }
+
+        function toggleStateReg(checkbox){
+            let stateRegInput = document.getElementById("InputInscription")
+            stateRegInput.disabled = checkbox.checked
+            if (checkbox.checked) {
+                stateRegInput.value = ""
+            }
+        }
+
+        function togglePf(selectElement) {
+            let selectedOption = selectElement.value
+            let pfH3 = document.getElementById("pf_h3")
+            let pfSection = document.getElementById("pf_section")
+            let stateReg = document.getElementById("pj_section")
+            let requiredFieldPf = pfSection.querySelectorAll(".changeReqPf")
+            let requiredFieldPj = document.querySelectorAll(".changeReqPj")
+
+            if (selectedOption == "PF") {
+                pfSection.style.display = "block"
+                stateReg.style.display = "none"
+                setRequired(requiredFieldPf, true)
+                setRequired(requiredFieldPj, false)
+                clearPjSection()
+            } else {
+                pfSection.style.display = "none"
+                stateReg.style.display = "block"
+                setRequired(requiredFieldPf, false)
+                setRequired(requiredFieldPj, true)
+                clearPfSection()
+            }
+        }
+
+        function clearPjSection() {
+            let stateReg = document.getElementById("InputInscription")
+            stateReg.value = ""
+        }
+
+        function clearPfSection() {
+            let genderSelect = document.getElementById("SelectGender")
+            let birthDate = document.getElementById("birthDate")
+
+            genderSelect.selectedIndex = 0
+            birthDate.value = ""
+        }
+
+        function setRequired(fields, isRequired) {
+            fields.forEach(function (field) {
+                if (isRequired) {
+                    field.setAttribute("required", "")
+                } else {
+                    field.removeAttribute("required")
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            $('#InputCpf').inputmask({
+                mask: ["999.999.999-99", "99.999.999/9999-99"],
+                keepStatic: true,
+                showMaskOnHover: true,
+                greedy:false,
+                definitions: {
+                    '9': {
+                        validator: '[0-9]'
+                    }
+                }
+            });
+
+            $('#InputCpf').on('input', function () {
+                var value = $(this).val().replace(/\D/g, '');
+                var mask = (value.length > 11) ? "99.999.999/9999-99" : "999.999.999-999";
+                $(this).inputmask("option", { mask: mask });
+            });
+
+            $("#InputPhone").inputmask('(99)99999-9999');
+            $("#InputEmail").inputmask({ alias: "email" })
+            $("#InputInscription").inputmask('999.999.999-999')
+        });
+
+    </script>
+</body>
